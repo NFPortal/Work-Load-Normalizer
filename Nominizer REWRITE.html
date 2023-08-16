@@ -319,7 +319,7 @@
                 const absTime = Math.abs(timeInSeconds);
                 const hours = Math.floor(absTime / 3600).toString().padStart(2, '0');
                 const minutes = Math.floor((absTime % 3600) / 60).toString().padStart(2, '0');
-                const seconds = (absTime % 60).toString().padStart(2, '0');
+                const seconds = Math.floor(absTime % 60).toString().padStart(2, '0');
                 
                 // Update display
                 timerDisplay.textContent = `${timeInSeconds >= 0 ? '' : '-'}${hours}:${minutes}:${seconds}`;
