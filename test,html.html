@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Calculator</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .panel {
+            background-color: lightgray;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            width: calc(50% - 22px);
+        }
+
+        #timeCalculator {
+            float: left;
+        }
+
+        #itemHours, #itemMinutes, #itemQuantity {
+            width: 2ch;
+            text-align: center;
+            padding: 2px 4px;
+        }
+
+        #addPanel {
+            float: right;
+        }
+
+        ul#list {
+            clear: both;
+            background-color: lightgray;
+            border: 1px solid #ccc;
+            list-style-type: none;
+            padding: 10px;
+            width: 50%;
+            max-height: 300px;
+            overflow-y: auto;
+            float: right;
+        }
+
+        li {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+/* 
+        li button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        } */ 
+
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+    </style>
+    
+</head>
+<body>
+    <!-- Time Calculator Panel -->
+    <div id="timeCalculator" class="panel">
+        <label for="startTime">Start Time:</label>
+        <input type="time" id="startTime">
+        <label for="finishTime">Finish Time:</label>
+        <input type="time" id="finishTime">
+        <button id="calculateBtn">Calculate</button>
+        <p id="result">Result: <span></span></p>
+        <div id="timer" style="font-size: 2rem;">00:00:00</div>
+    </div>
+
+    
+
+    <!-- Add Item Panel -->
+    <div id="addPanel" class="panel">
+        <label for="itemName">Item Name:</label>
+        <input type="text" id="itemName">
+
+        <label for="itemQuantity">Quantity:</label>
+        <input type="number" id="itemQuantity">
+
+        <label for="itemHours">Hours (HH):</label>
+        <input type="number" id="itemHours" placeholder="0">
+        
+        <label for="itemMinutes">Minutes (MM):</label>
+        <input type="number" id="itemMinutes" placeholder="0">        
+
+        <label for="itemType">Time Type:</label>
+        <select id="itemType">
+            <option value="static">Static</option>
+            <option value="dynamic">Average</option>
+        </select>
+              
+
+        <button id="addItemBtn">Add Item</button>
+    </div>
+
+    <!-- List of Items -->
+    <ul id="list"></ul>
+</body>
+
+<script>
+
+    // Global Variables
+    const dynamicItems = [];
+    const staticItems = [];
+     additionalTimePerItem = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // Event listeners
+        document.getElementById('addItemBtn').addEventListener('click', addItem);
+        document.getElementById('calculateBtn').addEventListener('click', calculateDifference);
+
+        function createListItem(item) {
+            if (document.getElementById(item.NAME) != null) {
+                if (confirm("List item already exists. Overwrite?")) {
+                    document.getElementById(item.NAME).remove();
+                } else {
+                    return;
+                }
+            }
+
+            const li = document.createElement('li');
+            li.id = item.NAME;
+
+            const plusBtn = document.createElement('button');
+            plusBtn.textContent = "+";
+            plusBtn.addEventListener('click', () => {
+                item.QUANTITY += 1;
+                updateListItemText();
+                buttonStyles();
+            });
+
+            const minusBtn = document.createElement('button');
+            //minusBtn.id = item.NAME + "Minus";
+            minusBtn.textContent = "-";  // Fixed here
+            minusBtn.addEventListener('click', () => {  // Fixed here
+                item.QUANTITY -= 1;
+                updateListItemText();
+                buttonStyles();
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Remove';
+            deleteBtn.addEventListener('click', () => {
+                const index = (item.TYPE === 'dynamic' ? dynamicItems : staticItems).indexOf(item);
+                if (index > -1) {
+                    (item.TYPE === 'dynamic' ? dynamicItems : staticItems).splice(index, 1);
+                    li.remove();
+                }
+            });
+
+            const itemText = document.createElement('span'); // Create a span for item text
+
+            const updateListItemText = () => {
+                itemText.textContent = `${item.NAME} (Qty: ${item.QUANTITY}, Time: ` + parseInt(item.TIME + additionalTimePerItem) + ` mins, Type: ${item.TYPE === 'dynamic' ? 'Dynamic' : 'Static'})`; // Update the span's text content
+            }
+
+            buttonStyles();
+
+            li.appendChild(plusBtn);
+            li.appendChild(minusBtn);
+
+
+            li.appendChild(itemText); // Append the span to the li
+
+            updateListItemText();
+           
+
+            li.appendChild(deleteBtn);
+            return li;
+
+            function buttonStyles() {
+                // Only hide the "-" button if starting quantity is 1
+                if (item.QUANTITY <= 1) {
+                    minusBtn.style.display = 'none';
+                } else {
+                    minusBtn.style.display = 'inline';
+                }
+            }
+        }
+
+        function addItem() {
+            const itemName = document.getElementById('itemName').value;
+            const itemQuantity = Number(document.getElementById('itemQuantity').value);
+            const itemType = document.getElementById('itemType').value;
+
+            let itemHours = document.getElementById('itemHours').value;
+            let itemMinutes = document.getElementById('itemMinutes').value;
+
+            // Defaulting empty inputs to 0
+            itemHours = itemHours ? Number(itemHours) : 0;
+            itemMinutes = itemMinutes ? Number(itemMinutes) : 0;
+
+            const itemTime = (itemHours * 60) + itemMinutes;
+
+            // Validation for the time inputs
+            if (itemTime === 0) {
+                alert("Please input a valid time (hours or minutes).");
+                return;
+            }
+
+            if (!itemName || itemQuantity <= 0 || itemTime <= 0) {
+                alert("Please ensure all fields are filled correctly.");
+                return;
+            }
+
+            const item = {
+                NAME: itemName,
+                QUANTITY: itemQuantity,
+                TIME: itemTime,
+                TYPE: itemType
+            };
+
+            (itemType === 'dynamic' ? dynamicItems : staticItems).push(item);
+            console.log(item)
+            document.getElementById('list').appendChild(createListItem(item));
+
+            // Clearing the input fields
+            document.getElementById('itemName').value = "";
+            document.getElementById('itemQuantity').value = "";
+            document.getElementById('itemHours').value = "";
+            document.getElementById('itemMinutes').value = "";
+            document.getElementById('itemType').checked = false;
+        }
+
+        function getTotalDynamicQuantity() {
+            return dynamicItems.reduce((total, item) => total + item.QUANTITY, 0);
+        }
+
+        function getTotalStaticTimeInMinutes() {
+            return staticItems.reduce((total, item) => total + (item.TIME * item.QUANTITY), 0);
+        }
+
+        function getTotalDynamicTimeInMinutes() {
+            return dynamicItems.reduce((total, item) => total + (item.TIME * item.QUANTITY), 0);
+        }
+
+        function calculateDifference() {
+            const startTime = document.getElementById('startTime').value;
+            const finishTime = document.getElementById('finishTime').value;
+
+            if (!startTime || !finishTime) {
+                alert("Please input start and finish times.");
+                return;
+            }
+
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [finishHour, finishMinute] = finishTime.split(':').map(Number);
+
+            const totalStartMinutes = startHour * 60 + startMinute;
+            const totalFinishMinutes = finishHour * 60 + finishMinute;
+
+            let timeAllotted = totalFinishMinutes - totalStartMinutes;
+            let adjTimeAllotted = timeAllotted - getTotalStaticTimeInMinutes();
+
+            const dynamicQuantity = getTotalDynamicQuantity();
+            const dynamicTime = getTotalDynamicTimeInMinutes();
+
+            if (dynamicQuantity === 0) {
+                alert("No dynamic items added.");
+                return;
+            }
+
+
+            const timePerDynamicItem = adjTimeAllotted / dynamicQuantity;
+            const minutes = Math.floor(timePerDynamicItem);
+            const seconds = Math.round((timePerDynamicItem - minutes) * 60);
+            
+            // New Step: Divide the average time by the total quantity of dynamic items again
+            if (dynamicQuantity == 1) {
+                additionalTimePerItem = adjTimeAllotted - dynamicItems[0].TIME;
+            } else {
+                additionalTimePerItem = (adjTimeAllotted - dynamicTime) / dynamicQuantity;
+            }
+            // Add this new value to each dynamic item's time
+            for (let item of dynamicItems) {
+                document.getElementById(item.NAME).remove();
+                document.getElementById('list').appendChild(createListItem(item));
+            }
+
+            document.getElementById('result').querySelector('span').textContent = `${minutes} min ${seconds} sec`;
+            startClock(adjTimeAllotted);
+        }
+
+        function startClock(timeInSeconds) {
+        console.log(timeInSeconds)
+        const timerDisplay = document.getElementById('timer');
+
+        const updateDisplay = () => {
+            // Calculate hours, minutes, and seconds
+            const absTime = Math.abs(timeInSeconds);
+            const hours = Math.floor(absTime / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((absTime % 3600) / 60).toString().padStart(2, '0');
+            const seconds = (absTime % 60).toString().padStart(2, '0');
+            
+            // Update display
+            timerDisplay.textContent = `${timeInSeconds >= 0 ? '' : '-'}${hours}:${minutes}:${seconds}`;
+            
+            // Change color
+            timerDisplay.style.color = timeInSeconds >= 0 ? 'green' : 'red';
+        };
+
+        const countdown = () => {
+            updateDisplay();
+            timeInSeconds--;
+        };
+
+        // Call the countdown function every second
+        setInterval(countdown, 1000);
+
+        }
+
+
+    });
+</script>
+</html>
+

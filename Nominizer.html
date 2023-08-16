@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Difference Calculator</title>
+    <style>
+
+        #rightContainer {
+            position: fixed;
+            right: 10px;
+            top: 10px;
+        }
+
+        #addPanel {
+            position: absolute;
+            right: 0px;  /* Adjust to be flush with the right edge of #rightContainer */
+            top: calc(100% + 10px);  /* Push it down below #timeCalculator */
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        #timeCalculator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            z-index: 1;
+        }
+
+        #list {
+            position: fixed;
+            right: 10px;
+            top: 250px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        li {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        button.remove {
+            margin-left: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="rightContainer">
+        <div id="timeCalculator">
+            <label for="startTime">Start Time (HH:MM):</label>
+            <input type="time" id="startTime">
+
+            <label for="finishTime">Finish Time (HH:MM):</label>
+            <input type="time" id="finishTime">
+
+            <button onclick="calculateDifference()">Calculate Minutes</button>
+
+            <p id="result"></p>
+        </div>
+
+        <div id="addPanel">
+            <input type="text" id="itemName" placeholder="Name">
+            <input type="number" id="itemQuantity" placeholder="Quantity" min="1">
+            <label for="timeCheckbox">
+                <input type="checkbox" id="timeCheckbox"> Static Time
+            </label>
+            <div id="timeInput">
+                <input type="number" id="itemHours" min="0" placeholder="HH" style="width: 50px;">
+                :
+                <input type="number" id="itemMinutes" min="0" max="59" placeholder="MM" style="width: 50px;">
+            </div>
+            <button onclick="addItem()">+</button>
+        </div>
+    </div>
+
+    <ul id="list">
+    </ul>
+    <!-- 
+    <div style="margin-top: 550px;">
+        <label for="startTime">Start Time (HH:MM):</label>
+        <input type="time" id="startTime">
+
+        <label for="finishTime">Finish Time (HH:MM):</label>
+        <input type="time" id="finishTime">
+
+        <button onclick="calculateDifference()">Calculate Minutes</button>
+
+        <p id="result"></p>
+    </div> -->
+
+
+</body>
+
+<script>
+    const dynamicItems = [];
+    const staticItems = [];
+
+    function createListItem(item) {
+        const name = item[0];
+        const quantity = item[1];
+        const hours = item[2];
+        const minutes = item[3];
+        
+        // Modify the way time is displayed for dynamic items
+        const timeDisplay = ` - ${hours}:${minutes}`;
+
+        const listItem = document.createElement('li');
+        listItem.textContent = `${name} (Qty: ${quantity})${timeDisplay}`;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '-';
+        removeBtn.className = 'remove';
+        removeBtn.onclick = function() {
+            const list = listItem.parentNode;
+            const index = Array.from(list.children).indexOf(listItem);
+            
+            const itemData = [name, quantity, hours, minutes];
+            
+            const staticIndex = staticItems.findIndex(i => i[0] === itemData[0] && i[1] === itemData[1] && i[2] === itemData[2] && i[3] === itemData[3]);
+            if (staticIndex !== -1) {
+                staticItems.splice(staticIndex, 1);
+            } else {
+                const dynamicIndex = dynamicItems.findIndex(i => i[0] === itemData[0] && i[1] === itemData[1] && i[2] === itemData[2] && i[3] === itemData[3]);
+                if (dynamicIndex !== -1) {
+                    dynamicItems.splice(dynamicIndex, 1);
+                }
+            }
+            listItem.remove();
+        };
+
+
+        listItem.appendChild(removeBtn);
+        return listItem;
+    }
+
+    function addItem() {
+        const name = document.getElementById('itemName').value;
+        const quantity = document.getElementById('itemQuantity').value;
+        let hours = document.getElementById('itemHours').value || "00";
+        let minutes = document.getElementById('itemMinutes').value || "00";
+        const isStaticTimeChecked = document.getElementById('timeCheckbox').checked;
+
+        let warningMsg = 'Please provide a name and a quantity';
+
+        // Check if both hours and minutes are 0 or empty
+        if (hours === "00" && minutes === "00") {
+            alert("Please provide a valid time (either hours or minutes should be non-zero).");
+            return;
+        }
+
+        if (name && quantity) {
+            hours = hours.padStart(2, '0');
+            minutes = minutes.padStart(2, '0');
+
+            const itemData = [name, quantity, hours, minutes];
+            const listItem = createListItem(itemData);
+
+            if (isStaticTimeChecked) {
+                staticItems.push(itemData);
+            } else {
+                dynamicItems.push(itemData);
+            }
+
+            const listContainer = document.getElementById('list');
+            listContainer.innerHTML = ''; 
+
+            dynamicItems.forEach(item => listContainer.appendChild(createListItem(item)));
+
+            if (staticItems.length) {
+                const staticHeader = document.createElement('li');
+                staticHeader.textContent = 'STATIC';
+                listContainer.appendChild(staticHeader);
+
+                staticItems.forEach(item => listContainer.appendChild(createListItem(item)));
+            }
+
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQuantity').value = '';
+            if (isStaticTimeChecked) {
+                document.getElementById('itemHours').value = '';
+                document.getElementById('itemMinutes').value = '';
+            }
+        } else {
+            if (isStaticTimeChecked) {
+                warningMsg += ' and a valid time in HH:MM format.';
+            }
+            alert(warningMsg);
+        }
+    }
+
+    function getTotalDynamicQuantity() {
+        let totalQuantity = 0;
+
+        for (let item of dynamicItems) {
+            const quantity = parseInt(item[1], 10);
+            totalQuantity += quantity;
+        }
+
+        return totalQuantity;
+    }
+
+
+    function getTotalStaticTimeInMinutes() {
+        let totalMinutes = 0;
+
+        for (let item of staticItems) {
+            // [name, quantity, hours, minutes]
+            const hours = parseInt(item[2], 10);
+            const minutes = parseInt(item[3], 10);
+            const quantity = parseInt(item[1], 10);
+
+            totalMinutes += (hours * 60 + minutes) * quantity; // Convert everything to minutes and account for quantity
+        }
+
+        return totalMinutes;
+    }
+
+    function calculateDifference() {
+        const startTime = document.getElementById('startTime').value;
+        const finishTime = document.getElementById('finishTime').value;
+
+        if (!startTime || !finishTime) {
+            alert("Please enter both start and finish times.");
+            return;
+        }
+
+        const start = new Date(`1970-01-01T${startTime}:00`);
+        const finish = new Date(`1970-01-01T${finishTime}:00`);
+
+        let difference = (finish - start) / (1000 * 60); // Convert difference from milliseconds to minutes
+        
+        if (difference < 0) {
+            difference += 24 * 60; // Adjust for next day, if finish time is earlier than start time
+        }
+
+        const staticTime = getTotalStaticTimeInMinutes();
+        const resultTime = difference - staticTime;
+
+
+        const totalDynamicQty = getTotalDynamicQuantity();
+
+        if (totalDynamicQty === 0) {
+            document.getElementById('result').innerText = "Error: Total dynamic quantity is zero!";
+            return;
+        }
+
+        const finalResult = resultTime / totalDynamicQty;
+
+        if (finalResult >= 0) {
+            let minutes = Math.floor(finalResult);
+            let seconds = Math.round((finalResult - minutes) * 60);
+            document.getElementById('result').innerText = `Difference after subtracting static times and dividing by total dynamic quantity: ${minutes} minutes and ${seconds} seconds per item`;
+        } else {
+            document.getElementById('result').innerText = "Error: Resulting time is negative!";
+        }
+    }
+</script>
+
+
+</html>

@@ -1,0 +1,36 @@
+Purpose: Takes user defined processes and a start and finish time to divide the number of processes by the ammount of time alotted. Program will state the average time for completion of one process and will show either red or green if ahead of projected calculated times.
+
+Major Parts:
+	1) User Defined Variables
+		a) Alloted Time Begin (Use datetime)
+		b) Alloted Time End (Use datetime)
+		c) Todo List of all unique processes with optional input for static times such as breaks.
+		
+	2) Time alloted calulator to divide processes evenly
+		a) Subtract static times from alloted time
+		
+Notes:
+Track data and average times for each process
+Add specific keybind to add lap
+Save all data
+Add option to add a certain amount of hours instead of start and end time
+List can be recaluculated at any time to allow for quick switching of prioritied or other processes but must have an apply button wth a confirmation messege
+Using logged info - if all processes already have an average time associated, then give toast at the top that says "You woud have an average of XX:XX free time if you keep up with the averages"
+
+TODO:
+Add html for user to add start and finish times
+	Format will be datetime format HH:MM:SS with 00 for seconds but only show HH:SS
+
+Add user Defined TODO List	
+	Should have a plus that pulls up a new screen with a text box for Name of Process and Checkbox that says static that pulls another text box to input a time
+		Static Time will subtract from alloted time
+	TODO list should short automatically into Static Times
+	Priority List should be incorperated as either dropdown or text
+		
+	
+Add Calculator to nominize times throughout the day
+	Anything without a time added by a user will be divided evenly into the day from alloted time
+	Anything with a time added by the user will just be listed in order of priority with the time set. This will subtract the time from the total alloted time to stretch any non defined time
+	
+	
+	
