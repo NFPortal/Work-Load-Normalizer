@@ -353,6 +353,7 @@
             let textElement = element.querySelector('span');
             textElement.textContent = `${item.NAME} (Qty: ${item.QUANTITY}, Time: ` + parseInt(item.TIME + additionalTimePerItem) + ` mins, Type: ${item.TYPE === 'dynamic' ? 'Dynamic' : 'Static'})`;
 
+            console.log(additionalTimePerItem + " Before");
             if (dynamicItems[0].QUANTITY == 0) {
                 const index = (dynamicItems[0].TYPE === 'dynamic' ? dynamicItems : staticItems).indexOf(dynamicItems[0]);
                 if (index > -1) {
@@ -367,7 +368,8 @@
             } else {
                 if (dynamicItems.length > 0) {
                     let time = (dynamicItems[0].TIME + additionalTimePerItem) * 60;
-                    //console.log(time)
+                    console.log("her")
+                    console.log(additionalTimePerItem)
                     startTimer(time);
                 } else {
                     clearInterval(timerId);
